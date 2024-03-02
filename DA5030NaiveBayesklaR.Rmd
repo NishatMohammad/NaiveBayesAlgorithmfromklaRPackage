@@ -1,0 +1,95 @@
+---
+title: "Apply Naive Bayes from klaR Package "
+author: Dr. Nishat Mohammad
+date: 02/15/2024
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+## 1. Load Requirements.  
+
+### 1.1. Loading `klaR` Package.  
+
+```{r load_klaR, message=FALSE, results='hide', warning=FALSE}
+library(klaR)
+```
+
+### 1.2. Loading `iris` dataset.  
+
+```{r load_dataset}
+data(iris)
+```
+
+## 2. Explore `iris` Dataset.  
+```{r explore_dataset}
+# Get number of rows in iris dataset
+nrow(iris)
+
+# Look at the summary of statistics of the dataset
+summary(iris)
+
+# Look at the first 6 rows of iris data set
+head(iris)
+```
+The number of rows in iris are `r paste0('"',nrow(iris),'"')`. This was gotten by passing iris to `nrow()` function.  
+The summary of the descriptive statistics for the variables in the iris data by mean, median, min, max are gotten by passing iris to `summary()` function and can be seen above.  
+The first 6 rows of the iris dataset can be seen by passing iris to `head()` function and can be viewed above. the default number of rows is 6 for this function and can be adjusted by passing the required number of rows to the n option like this `head(iris, n=10)` if 10 rows are needed to be viewed.   
+The iris dataset describes the data collected for  3 species (Setosa, Versicolor and Virginica) based on the Sepal and Petal lengths and widths.  
+
+## 3. Split Data into Train and Test Sets.  
+### 3.1. Define the indices for test set rows.  
+
+```{r define_test_set}
+# The tests set
+testidx <- which(1:length(iris[, 1]) %% 5 == 0)
+head(testidx)
+```
+This line of code extracts the index for every fifth (5th) row of iris data set by giving the length of the first column by 5 without a remainder (remainder is 0).  
+
+### 3.2. Define train and test.  
+
+```{r train_test_sets}
+# separate into training and testing datasets
+iristrain <- iris[-testidx,]
+iristest <- iris[testidx,]
+
+```
+Take all the data in `testidx` as test form the iris data set and the rest of the indices will be for the train set.  This defines the test and train sets as: 30 rows  for test and _150-30=_ 120 rows for the train which is a ratio of 80:20 for the train and test sets respectively.  
+
+## 4. Naive Bayes Model.  
+
+```{r}
+# apply Naive Bayes
+nbmodel <- NaiveBayes(Species~., data=iristrain)
+
+```
+
+The name of the Naive bayes model is `nbmodel`.  
+Modelling is done using the `NaiveBayes()` function form the `e1071` package.  
+The model predicts the species form the `Species` variable of iris data by adding tilda `~` after the `Species` variable name. The dot `.` indicates that all other variables are to be used as for the prediction of the species.  
+The `iristrain` is the train set created earlier and will be used to train the model by passing it to the `data=` option.  
+
+## 5. Model Accuracy.  
+
+```{r accuracy_check}
+# check the accuracy
+prediction <- predict(nbmodel, iristest[,-5])
+table(prediction$class, iristest[,5])
+
+```
+First the prediction is done using the model `nbmodel` and all the data in the test set `iristest` except the fifth column with species names by using the `predict()` function.   
+Then a table is used to check the predictions made by looking at the classes gotten form the Naive Bayes through the `class` form the `predict()` function object. also the fifth column of the test set is passed to get the **true cases** for those species in the firth column of the test set.  
+From the table generated, the following inferences can be made:  
+
+True Positives: setosa 10, versicolor 10 and virginica 8 making a total of 28.  
+True Negatives: The true cases alone for this data set as explained previously.  
+False positives: setosa 0, versicolor 2 (the model predicted these as virginica), virginica 0.
+The probability that this model predicts true cases correctly is _28/30 = 0.933_.  
+The accuracy is _(True Positives + True Negatives) / total_obs = (28+x)/30_, where _x_ is the sum of True negatives.  
+If the true negatives were to be gotten from: total_obs - TP it would imply that the true negatives and false positives are the same which sounds erronious so I will stick with accuracy of the model to be _(28+x)/30_, where _x_ is the sum of True negatives. but in the vice versa the accuracy will be equal to 30/30 which is almost impossible in my opinion.   
+
